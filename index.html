@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chart from Rust</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 32px;
+        }
+        
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .status.connected {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status.disconnected {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .status.connecting {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        #chart {
+            background: #1a1f3a;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        
+        .info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: #1a1f3a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .info-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .info-card.up p {
+            color: #26a69a;
+        }
+        
+        .info-card.down p {
+            color: #ef5350;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Real-time Deriv Chart via Rust WebSocket</h1>
+        
+        <div id="status" class="status connecting">
+            🔄 กำลังเชื่อมต่อ...
+        </div>
+        
+        <div id="chart"></div>
+        
+        <div class="info">
+            <div class="info-card">
+                <h3>ราคาล่าสุด</h3>
+                <p id="lastPrice">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Open</h3>
+                <p id="openPrice">-</p>
+            </div>
+            <div class="info-card">
+                <h3>High</h3>
+                <p id="highPrice">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Low</h3>
+                <p id="lowPrice">-</p>
+            </div>
+            <div class="info-card">
+                <h3>จำนวน Candles</h3>
+                <p id="candleCount">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // เปลี่ยน URL เป็น IP ของ EC2
+        const WS_URL = 'ws://localhost:8080/ws';
+        
+        let ws = null;
+        let chart = null;
+        let candlestickSeries = null;
+        let candleCount = 0;
+        let lastCandle = null;
+        
+        // สร้าง chart
+        function initChart() {
+            chart = LightweightCharts.createChart(document.getElementById('chart'), {
+                width: document.getElementById('chart').clientWidth,
+                height: 600,
+                layout: {
+                    background: { color: '#1a1f3a' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#2a2e39' },
+                    horzLines: { color: '#2a2e39' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#2a2e39',
+                },
+                timeScale: {
+                    borderColor: '#2a2e39',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+            });
+            
+            candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+    upColor: '#26a69a',
+    downColor: '#ef5350',
+    borderVisible: false,
+    wickUpColor: '#26a69a',
+    wickDownColor: '#ef5350',
+});
+            
+            // Auto resize
+            window.addEventListener('resize', () => {
+                chart.applyOptions({
+                    width: document.getElementById('chart').clientWidth
+                });
+            });
+        }
+        
+        // อัพเดทข้อมูลด้านล่าง
+        function updateInfo(candle) {
+            document.getElementById('lastPrice').textContent = candle.close.toFixed(2);
+            document.getElementById('openPrice').textContent = candle.open.toFixed(2);
+            document.getElementById('highPrice').textContent = candle.high.toFixed(2);
+            document.getElementById('lowPrice').textContent = candle.low.toFixed(2);
+            document.getElementById('candleCount').textContent = candleCount;
+            
+            // เปลี่ยนสีตาม up/down
+            const lastPriceCard = document.getElementById('lastPrice').parentElement;
+            if (candle.close >= candle.open) {
+                lastPriceCard.classList.remove('down');
+                lastPriceCard.classList.add('up');
+            } else {
+                lastPriceCard.classList.remove('up');
+                lastPriceCard.classList.add('down');
+            }
+        }
+        
+        // เชื่อมต่อ WebSocket
+        function connectWebSocket() {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status connecting';
+            statusEl.textContent = '🔄 กำลังเชื่อมต่อ...';
+            
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                console.log('✅ WebSocket Connected');
+                statusEl.className = 'status connected';
+                statusEl.textContent = '✅ เชื่อมต่อสำเร็จ - กำลังรับข้อมูล Real-time';
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const candle = JSON.parse(event.data);
+                    
+                    // แปลงข้อมูลให้ตรงกับ LightweightCharts
+                    const chartData = {
+                        time: candle.time,
+                        open: candle.open,
+                        high: candle.high,
+                        low: candle.low,
+                        close: candle.close,
+                    };
+                    
+                    // อัพเดท chart
+                    candlestickSeries.update(chartData);
+                    
+                    // อัพเดทข้อมูล
+                    candleCount++;
+                    lastCandle = candle;
+                    updateInfo(candle);
+                    
+                    console.log('📊 New candle:', chartData);
+                    
+                } catch (error) {
+                    console.error('❌ Error parsing candle:', error);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket Error:', error);
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = '❌ เกิดข้อผิดพลาด';
+            };
+            
+            ws.onclose = () => {
+                console.log('⚠️ WebSocket Closed');
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = '⚠️ การเชื่อมต่อขาด - กำลังเชื่อมต่อใหม่...';
+                
+                // เชื่อมต่อใหม่อัตโนมัติหลัง 3 วินาที
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+        
+        // เริ่มต้น
+        initChart();
+        connectWebSocket();
+    </script>
+</body>
+</html>

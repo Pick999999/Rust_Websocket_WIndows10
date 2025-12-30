@@ -1,0 +1,17 @@
+# EMA Indicator Configuration
+# This file contains settings for the short and long EMA indicators
+
+[indicators]
+# Short EMA settings
+# type: "ema", "sma", "wma", "hma", "ehma"
+short_ema_type = "ema"
+short_ema_period = 3
+
+# Long EMA settings
+long_ema_type = "ema"
+long_ema_period = 5
+
+[chart]
+# Colors for EMA lines on chart
+short_ema_color = "#00BFFF"  # Deep Sky Blue
+long_ema_color = "#FF6347"   # Tomato Red
