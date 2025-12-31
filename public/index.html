@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rust Relay Monitor & Trading v1.1.0</title>
+    <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Consolas', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            border: 2px solid #333;
+            padding: 30px;
+            border-radius: 15px;
+            background: #252525;
+            width: 90%;
+            max-width: 1400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            color: #00d4ff;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .trading-panel {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #00d4ff;
+        }
+
+        .section-title {
+            color: #00d4ff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select,
+        button,
+        input {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+
+        select,
+        input {
+            background: #333;
+            color: white;
+        }
+
+        input {
+            font-family: 'Consolas', monospace;
+        }
+
+        button {
+            background: #00d4ff;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #00a3c4;
+            transform: scale(1.02);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .radio-item input[type="radio"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .radio-item label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #chartContainer {
+            background: #000;
+            padding: 10px;
+            border-radius: 10px;
+            border-left: 5px solid #00d4ff;
+            height: 500px;
+        }
+
+        .display-area {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 5px solid #00d4ff;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .info-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #00ff00;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .green {
+            color: #00ff00;
+        }
+
+        .red {
+            color: #ff4444;
+        }
+
+        .yellow {
+            color: #ffaa00;
+        }
+
+        .blue {
+            color: #00d4ff;
+        }
+
+        .trading-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .stat-box-label {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .stat-box-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        .input-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .trade-history {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #00d4ff;
+            margin-top: 20px;
+        }
+
+        .active-trades {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff9900;
+            margin-top: 20px;
+        }
+
+        .active-trades .section-title {
+            color: #ff9900;
+        }
+
+        .profit-positive {
+            color: #00ff00 !important;
+            font-weight: bold;
+        }
+
+        .profit-negative {
+            color: #ff4444 !important;
+            font-weight: bold;
+        }
+
+        .time-warning {
+            color: #ff9900 !important;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-open {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .trade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .trade-table th {
+            background: #1a1a1a;
+            color: #00d4ff;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            border-bottom: 2px solid #333;
+        }
+
+        .trade-table td {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+        }
+
+        .trade-table tr:hover {
+            background: #1a1a1a;
+        }
+
+        .status-pending {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        .status-win {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .status-loss {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .trade-id {
+            color: #888;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .no-trades {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* Analog Clock Styles */
+        .analog-clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .analog-clock {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 3px solid #00d4ff;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .clock-face {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+        }
+
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(145deg, #00d4ff, #0099cc);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+        }
+
+        .clock-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 4px;
+        }
+
+        .hour-hand {
+            width: 4px;
+            height: 35px;
+            background: linear-gradient(to top, #00d4ff, #fff);
+            margin-left: -2px;
+            box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+        }
+
+        .minute-hand {
+            width: 3px;
+            height: 50px;
+            background: linear-gradient(to top, #00ff88, #fff);
+            margin-left: -1.5px;
+            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+
+        .second-hand {
+            width: 2px;
+            height: 55px;
+            background: linear-gradient(to top, #ff4444, #ffaa00);
+            margin-left: -1px;
+            box-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+        }
+
+        .clock-tick {
+            position: absolute;
+            width: 2px;
+            height: 8px;
+            background: #666;
+            top: 8px;
+            left: 50%;
+            margin-left: -1px;
+            transform-origin: center 67px;
+        }
+
+        .clock-tick.major {
+            height: 12px;
+            width: 3px;
+            margin-left: -1.5px;
+            background: #00d4ff;
+        }
+
+        .clock-number {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #888;
+        }
+
+        .digital-time {
+            font-size: 18px;
+            color: #00d4ff;
+            margin-top: 10px;
+            font-family: 'Consolas', monospace;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .clock-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .sell-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .sell-btn:hover {
+            background: #cc0000;
+        }
+
+        /* CSS สำหรับ 3-State Switch Toggle */
+
+        /* องค์ประกอบหลักของสวิตช์ */
+        .switch-container {
+            display: flex;
+            position: relative;
+            width: 100%;
+            /* Changed from 300px to 100% to fit container */
+            max-width: 300px;
+            background-color: #eee;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+        }
+
+        /* ซ่อน Radio Button จริงๆ */
+        .switch-container input[type="radio"] {
+            display: none;
+        }
+
+        /* Styling สำหรับ Label (ปุ่มที่มองเห็น) */
+        .switch-container label {
+            flex-grow: 1;
+            /* ทำให้แต่ละปุ่มมีขนาดเท่ากัน */
+            text-align: center;
+            padding: 10px 10px;
+            /* Reduced padding to fit */
+            font-weight: bold;
+            font-size: 14px;
+            /* Adjusted font size */
+            color: #555;
+            cursor: pointer;
+            z-index: 2;
+            /* ให้อยู่เหนือ slider */
+            transition: color 0.3s ease;
+            user-select: none;
+            /* ป้องกันการเลือกข้อความ */
+        }
+
+        /* ตัวเลื่อน (Slider/Thumb) */
+        .switch-slider {
+            position: absolute;
+            top: 4px;
+            /* เท่ากับ padding ด้านบนของ container */
+            bottom: 4px;
+            /* เท่ากับ padding ด้านล่างของ container */
+            width: calc(100% / 4 - 5px);
+            /* Updated for 4 items: CALL, IDLE, PUT, AUTO */
+            background-color: #fff;
+            border-radius: 6px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            z-index: 1;
+            /* ให้อยู่ใต้ label */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- การเปลี่ยนตำแหน่งของ Slider ตามสถานะที่เลือก --- */
+
+        /* สถานะเริ่มต้น: CALL */
+        /* ตัวเลื่อนอยู่ตำแหน่งซ้ายสุด (0%) */
+        #switch-call:checked~.switch-slider {
+            transform: translateX(0%);
+            background-color: #2ecc71;
+            /* สีเขียวสำหรับ CALL */
+        }
+
+        #switch-call:checked+label {
+            color: #fff;
+            /* เปลี่ยนสีตัวอักษรเมื่อถูกเลือก */
+        }
+
+        /* สถานะ: IDLE */
+        /* ตัวเลื่อนอยู่ตำแหน่งตรงกลาง (100% ของความกว้างปุ่ม) */
+        #switch-idle:checked~.switch-slider {
+            transform: translateX(100%);
+            /* Adjusted for 3 items */
+            background-color: #f1c40f;
+            /* สีเหลือง/ส้มสำหรับ IDLE */
+        }
+
+        #switch-idle:checked+label {
+            color: #fff;
+        }
+
+        /* สถานะ: PUT */
+        /* ตัวเลื่อนอยู่ตำแหน่งขวาสุด (200% ของความกว้างปุ่ม) */
+        #switch-put:checked~.switch-slider {
+            transform: translateX(200%);
+            /* Position 3 for PUT */
+            background-color: #e74c3c;
+            /* สีแดงสำหรับ PUT */
+        }
+
+        #switch-put:checked+label {
+            color: #fff;
+        }
+
+        /* สถานะ: AUTO */
+        #switch-auto:checked~.switch-slider {
+            transform: translateX(300%);
+            /* Position 4 for AUTO */
+            background-color: #9b59b6;
+            /* สีม่วงสำหรับ AUTO */
+        }
+
+        #switch-auto:checked+label {
+            color: #fff;
+        }
+
+        /* การเน้นสีข้อความเมื่อไม่ได้เลือก (Optional) */
+        .switch-container input[type="radio"]:not(:checked)+label:hover {
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>📡 TRADE RELAY - REAL-TIME CANDLESTICK & AUTO TRADING</h2>
+
+        <div class="main-grid">
+            <!-- Trading Panel -->
+            <div class="trading-panel">
+                <!-- Analog Clock -->
+                <div class="analog-clock-container">
+                    <div class="analog-clock" id="analogClock">
+                        <div class="clock-face">
+                            <!-- Clock Ticks -->
+                            <div class="clock-tick major" style="transform: rotate(0deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(30deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(60deg);"></div>
+                            <div class="clock-tick major" style="transform: rotate(90deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(120deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(150deg);"></div>
+                            <div class="clock-tick major" style="transform: rotate(180deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(210deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(240deg);"></div>
+                            <div class="clock-tick major" style="transform: rotate(270deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(300deg);"></div>
+                            <div class="clock-tick" style="transform: rotate(330deg);"></div>
+                            <!-- Clock Numbers -->
+                            <span class="clock-number"
+                                style="top: 10px; left: 50%; transform: translateX(-50%);">12</span>
+                            <span class="clock-number"
+                                style="top: 50%; right: 10px; transform: translateY(-50%);">3</span>
+                            <span class="clock-number"
+                                style="bottom: 10px; left: 50%; transform: translateX(-50%);">6</span>
+                            <span class="clock-number"
+                                style="top: 50%; left: 10px; transform: translateY(-50%);">9</span>
+                        </div>
+                        <div class="clock-hand hour-hand" id="hourHand"></div>
+                        <div class="clock-hand minute-hand" id="minuteHand"></div>
+                        <div class="clock-hand second-hand" id="secondHand"></div>
+                        <div class="clock-center"></div>
+                    </div>
+                    <div class="digital-time" id="digitalTime">00:00:00</div>
+                    <div class="clock-label">Local Time</div>
+                </div>
+                <div class="section-title">🔌 CONNECTION</div>
+                <div class="controls">
+                    <button onclick="connectWS()">CONNECT</button>
+                    <button onclick="disconnectWS()" style="background: #ff9900;">DISCONNECT</button>
+                    <button onclick="disconnectAndUnsubscribe()" style="background: #ff4444;">DISCONNECT &
+                        UNSUBSCRIBE</button>
+                </div>
+
+                <div class="section-title">📊 MARKET DATA</div>
+                <div class="controls">
+                    <select id="assetSelect">
+                        <option value="R_50">Volatility 50 Index</option>
+                        <option value="R_100">Volatility 100 Index</option>
+                        <option value="frxEURUSD">EUR/USD</option>
+                        <option value="cryBTCUSD">BTC/USD</option>
+                    </select>
+                    <button onclick="requestData()" style="background: #00cc00;">REQUEST DATA</button>
+                    <button onclick="clearChart()" style="background: #ff4444;">CLEAR CHART</button>
+                </div>
+
+                <div class="section-title">🤖 AUTO TRADING</div>
+
+                <div class="input-group">
+                    <div class="input-label">Trade Direction:</div>
+                    <div class="switch-container">
+                        <input type="radio" id="switch-call" name="switch-state" value="call"
+                            onchange="updateTradeMode(this.value)">
+                        <label for="switch-call">CALL</label>
+
+                        <input type="radio" id="switch-idle" name="switch-state" value="idle" checked
+                            onchange="updateTradeMode(this.value)">
+                        <label for="switch-idle">IDLE</label>
+
+                        <input type="radio" id="switch-put" name="switch-state" value="put"
+                            onchange="updateTradeMode(this.value)">
+                        <label for="switch-put">PUT</label>
+
+                        <input type="radio" id="switch-auto" name="switch-state" value="auto"
+                            onchange="updateTradeMode(this.value)">
+                        <label for="switch-auto">AUTO</label>
+
+                        <div class="switch-slider"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">Money Management:</div>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="money-fix" name="money-mode" value="fix" checked
+                                onchange="updateParams()">
+                            <label for="money-fix">Fix Money</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="money-martingale" name="money-mode" value="martingale"
+                                onchange="updateParams()">
+                            <label for="money-martingale">Martingale</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">Initial Stake ($):</div>
+                    <input type="number" id="initial-stake" value="1" min="0.35" step="0.01">
+                </div>
+
+                <!-- LotNo Settings -->
+                <div class="section-title" style="margin-top: 20px; color: #ff00ff;">🎯 LOT SETTINGS</div>
+
+                <div class="input-group" id="group-grand-profit">
+                    <div class="input-label">Target Grand Profit ($):</div>
+                    <input type="number" id="target-grand-profit" value="10" step="1" onchange="updateParams()">
+                </div>
+
+                <div class="input-group" id="group-win-count" style="display: none;">
+                    <div class="input-label">Target Win Count:</div>
+                    <input type="number" id="target-win-count" value="5" step="1" onchange="updateParams()">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">API Token:</div>
+                    <input type="password" id="api-token" placeholder="Your Deriv API token" value="lt5UMO6bNvmZQaR">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">App ID (optional):</div>
+                    <input type="text" id="app-id" value="66726" placeholder="66726">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">Duration:</div>
+                    <select id="durationSelect" onchange="updateParams()">
+                        <option value="55:s">55 Seconds</option>
+                        <option value="3:m">3 Minutes</option>
+                        <option value="5:m">5 Minutes</option>
+                        <option value="15:m">15 Minutes</option>
+                        <option value="30:m">30 Minutes</option>
+                        <option value="60:m">60 Minutes</option>
+                    </select>
+                </div>
+
+                <div class="trading-stats">
+                    <div class="stat-box">
+                        <div class="stat-box-label">Balance</div>
+                        <div id="balance" class="stat-box-value green">0.00</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Win Status</div>
+                        <div id="win-status" class="stat-box-value yellow">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Win Streak</div>
+                        <div id="win-streak" class="stat-box-value green">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">Loss Streak</div>
+                        <div id="loss-streak" class="stat-box-value red">0</div>
+                    </div>
+                </div>
+
+                <div class="trading-stats" style="margin-top: 10px;">
+                    <div class="stat-box" style="border-color: #ff00ff;">
+                        <div class="stat-box-label">Lot Profit</div>
+                        <div id="lot-profit" class="stat-box-value blue">0.00</div>
+                    </div>
+                    <div class="stat-box" style="border-color: #ff00ff;">
+                        <div class="stat-box-label">Lot Wins</div>
+                        <div id="lot-wins" class="stat-box-value blue">0/5</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Area -->
+            <div>
+                <div id="chartContainer"></div>
+            </div>
+        </div>
+
+        <div class="display-area">
+            <div class="info-card">
+                <div class="info-label">SYMBOL</div>
+                <div id="out-symbol" class="info-value">---</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">CURRENT PRICE</div>
+                <div id="out-price" class="info-value">0.0000</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">TIME</div>
+                <div id="out-time" class="info-value" style="font-size: 16px; color: #aaa;">--:--:--</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">CANDLES</div>
+                <div id="candle-count" class="info-value">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">SERVER TIME</div>
+                <div id="server-time" class="info-value" style="font-size: 16px; color: #00d4ff;">--:--:--</div>
+            </div>
+        </div>
+
+        <!-- EMA Analysis Panel -->
+        <div class="display-area" style="border-left: 5px solid #9b59b6;">
+            <div class="info-card">
+                <div class="info-label">SHORT SLOPE</div>
+                <div id="ema-short-slope" class="info-value" style="font-size: 18px;">-</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">SHORT EMA VALUE</div>
+                <div id="ema-short-value" class="info-value" style="font-size: 18px;">-</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">TURN TYPE</div>
+                <div id="ema-turn-type" class="info-value" style="font-size: 18px;">-</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">EMA DIFF (S-L)</div>
+                <div id="ema-diff" class="info-value" style="font-size: 18px;">-</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">ACTION SIGNAL</div>
+                <div id="action-signal" class="info-value" style="font-size: 20px; color: #9b59b6;">-</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">OPEN</div>
+                <div id="stat-open" class="stat-value">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">HIGH</div>
+                <div id="stat-high" class="stat-value green">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">LOW</div>
+                <div id="stat-low" class="stat-value red">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">CLOSE</div>
+                <div id="stat-close" class="stat-value">-</div>
+            </div>
+        </div>
+
+        <!-- Active Trades Section -->
+        <div class="active-trades">
+            <div class="section-title">🔥 ACTIVE TRADES (Real-time Tracking)</div>
+            <table class="trade-table">
+                <thead>
+                    <tr>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th>Contract ID</th>
+                        <th>Symbol</th>
+                        <th>ประเภท</th>
+                        <th>ราคาซื้อ</th>
+                        <th>Payout</th>
+                        <th>กำไร/ขาดทุน</th>
+                        <th>เวลาซื้อ</th>
+                        <th>เวลาหมดอายุ</th>
+                        <th>เวลาที่เหลือ</th>
+                        <th>Min Profit</th>
+                        <th>Max Profit</th>
+                        <th>การจัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="active-trades-body">
+                    <tr>
+                        <td colspan="8" class="no-trades">No active trades. Trades will appear here when opened.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="trade-history">
+            <div class="section-title">📋 TRADE HISTORY</div>
+            <table class="trade-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Asset</th>
+                        <th>Type</th>
+                        <th>Stake</th>
+                        <th>Status</th>
+                        <th>Profit/Loss</th>
+                        <th>Balance</th>
+                        <th>Contract ID</th>
+                    </tr>
+                </thead>
+                <tbody id="trade-history-body">
+                    <tr>
+                        <td colspan="8" class="no-trades">No trades yet. Start trading to see history.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="status" class="status">WebSocket: NOT CONNECTED</div>
+    </div>
+
+    <script>
+        let ws;
+        let chart;
+        let candleSeries;
+        let shortEmaSeries;
+        let longEmaSeries;
+        let candleData = [];
+        let currentMinute = null;
+        let winCount = 0;
+        let lossCount = 0;
+        let winStreak = 0;
+        let lossStreak = 0;
+        let tradeHistory = [];
+        let pendingTrades = new Map();
+        let activeTrades = new Map();
+        let emaConfig = {
+            shortPeriod: 9,
+            longPeriod: 21,
+            shortType: 'EMA',
+            longType: 'EMA'
+        };
+        let timeOffset = 0;
+        let isTimeSynced = false;
+
+        function initChart() {
+            const container = document.getElementById('chartContainer');
+            chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: 480,
+                layout: {
+                    background: { color: '#000000' },
+                    textColor: '#888',
+                },
+                grid: {
+                    vertLines: { color: '#333' },
+                    horzLines: { color: '#333' },
+                },
+                timeScale: {
+                    timeVisible: true,
+                    secondsVisible: false,
+                    borderColor: '#333',
+                },
+                rightPriceScale: {
+                    borderColor: '#333',
+                },
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#00ff00',
+                downColor: '#ff4444',
+                borderUpColor: '#00ff00',
+                borderDownColor: '#ff4444',
+                wickUpColor: '#00ff00',
+                wickDownColor: '#ff4444',
+            });
+
+            // Short EMA Line (Deep Sky Blue)
+            shortEmaSeries = chart.addLineSeries({
+                color: '#00BFFF',
+                lineWidth: 2,
+                title: 'Short EMA',
+                crosshairMarkerVisible: true,
+                crosshairMarkerRadius: 4,
+            });
+
+            // Long EMA Line (Tomato Red/Orange)
+            longEmaSeries = chart.addLineSeries({
+                color: '#FF6347',
+                lineWidth: 2,
+                title: 'Long EMA',
+                crosshairMarkerVisible: true,
+                crosshairMarkerRadius: 4,
+            });
+
+            window.addEventListener('resize', function () {
+                chart.applyOptions({ width: container.clientWidth });
+            });
+        }
+
+        function connectWS() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                alert("Already connected!");
+                return;
+            }
+
+            document.getElementById('status').innerText = "WebSocket: Connecting...";
+            document.getElementById('status').style.color = "#ffaa00";
+
+            //ws = new WebSocket('ws://' + window.location.host + '/ws');
+            //ws = new WebSocket('ws://pkderiv.shop/ws');
+            // ถ้า run บน ec2 ให้ใช้ 
+            //ws = new WebSocket("wss://pkderiv.shop/ws");
+            // ถ้า run บน localhost ให้ใช้ 
+            ws = new WebSocket("ws://localhost:8080/ws");
+
+
+            ws.onopen = function () {
+                document.getElementById('status').innerText = "WebSocket: ONLINE ✓";
+                document.getElementById('status').style.color = "#00ff00";
+                console.log("✓ WebSocket connected");
+            };
+
+            ws.onmessage = function (event) {
+                console.log("📩 Data received:", event.data);
+                const data = JSON.parse(event.data);
+
+                if (data.type === "server_time") {
+                    const serverTimeMs = data.server_time * 1000;
+                    const serverDate = new Date(serverTimeMs);
+
+                    // Sync time if not synced yet OR if seconds is 30
+                    if (!isTimeSynced || serverDate.getSeconds() === 30) {
+                        timeOffset = serverTimeMs - Date.now();
+                        isTimeSynced = true;
+                        console.log("🕒 Time Synced! Offset:", timeOffset, "ms");
+                    }
+
+                    document.getElementById('server-time').innerText = serverDate.toLocaleTimeString();
+                } else if (data.type === "balance") {
+                    handleBalance(data);
+                } else if (data.type === "ema_data") {
+                    handleEmaData(data);
+                } else if (data.type === "analysis_data") {
+                    handleAnalysisData(data);
+                } else if (data.type === "trade_opened") {
+                    handleTradeOpened(data);
+                } else if (data.type === "trade_update") {
+                    handleTradeUpdate(data);
+                } else if (data.type === "trade_result") {
+                    handleTradeResult(data);
+                } else if (data.type === "lot_status") {
+                    handleLotStatus(data);
+                } else if (data.symbol) {
+                    processOHLC(data);
+                }
+            };
+
+            ws.onclose = function () {
+                document.getElementById('status').innerText = "WebSocket: DISCONNECTED";
+                document.getElementById('status').style.color = "#ff4444";
+                console.log("✗ WebSocket disconnected");
+            };
+
+            ws.onerror = function (error) {
+                console.error("WebSocket error:", error);
+                document.getElementById('status').innerText = "WebSocket: ERROR";
+                document.getElementById('status').style.color = "#ff0000";
+            };
+        }
+
+        function disconnectWS() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+                document.getElementById('status').innerText = "WebSocket: DISCONNECTED";
+                document.getElementById('status').style.color = "#888";
+                console.log("🔌 WebSocket disconnected manually");
+            } else {
+                alert("Not connected!");
+            }
+        }
+
+        function disconnectAndUnsubscribe() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                console.log("🛑 Sending STOP_STREAMS command...");
+                ws.send(JSON.stringify({
+                    command: "STOP_STREAMS"
+                }));
+
+                // Wait a bit before closing to ensure message is sent
+                setTimeout(() => {
+                    disconnectWS();
+                }, 500);
+            } else {
+                alert("Not connected!");
+            }
+        }
+
+        function handleLotStatus(data) {
+            console.log("🎯 Lot Status:", data);
+
+            document.getElementById('lot-profit').innerText = data.grand_profit.toFixed(2);
+            document.getElementById('lot-profit').className = data.grand_profit >= 0 ? "stat-box-value green" : "stat-box-value red";
+
+            document.getElementById('lot-wins').innerText = data.win_count + "/" + data.target_win;
+
+            // If lot is inactive (stopped), switch UI to IDLE
+            if (!data.lot_active) {
+                document.getElementById('switch-idle').checked = true;
+                // Trigger change event to update slider visual
+                updateTradeMode('idle');
+            }
+
+            // Sync inputs if they differ (optional, but good for sync)
+            if (document.activeElement.id !== 'target-grand-profit') {
+                document.getElementById('target-grand-profit').value = data.target_profit;
+            }
+            if (document.activeElement.id !== 'target-win-count') {
+                document.getElementById('target-win-count').value = data.target_win;
+            }
+        }
+
+        function processOHLC(data) {
+            const timestamp = data.time;
+            const date = new Date(timestamp * 1000);
+            const minute = Math.floor(timestamp / 60) * 60;
+
+            document.getElementById('out-symbol').innerText = data.symbol;
+            document.getElementById('out-price').innerText = data.close.toFixed(4);
+            document.getElementById('out-time').innerText = date.toLocaleTimeString();
+            document.getElementById('stat-open').innerText = data.open.toFixed(4);
+            document.getElementById('stat-high').innerText = data.high.toFixed(4);
+            document.getElementById('stat-low').innerText = data.low.toFixed(4);
+            document.getElementById('stat-close').innerText = data.close.toFixed(4);
+
+            const existingIndex = candleData.findIndex(function (candle) {
+                return candle.time === minute;
+            });
+
+            if (existingIndex >= 0) {
+                candleData[existingIndex] = {
+                    time: minute,
+                    open: candleData[existingIndex].open,
+                    high: Math.max(candleData[existingIndex].high, data.high),
+                    low: Math.min(candleData[existingIndex].low, data.low),
+                    close: data.close
+                };
+            } else {
+                candleData.push({
+                    time: minute,
+                    open: data.open,
+                    high: data.high,
+                    low: data.low,
+                    close: data.close
+                });
+            }
+
+            candleData.sort(function (a, b) {
+                return a.time - b.time;
+            });
+
+            candleSeries.setData(candleData);
+            document.getElementById('candle-count').innerText = candleData.length;
+
+            if (candleData.length > 200) {
+                candleData = candleData.slice(-200);
+            }
+        }
+
+        function handleBalance(data) {
+            console.log("💰 Balance Update:", data.balance);
+            document.getElementById('balance').innerText = data.balance.toFixed(2);
+        }
+
+        function handleEmaData(data) {
+            console.log("📈 EMA Data received:", data);
+
+            // Update EMA config
+            emaConfig.shortPeriod = data.short_period;
+            emaConfig.longPeriod = data.long_period;
+            emaConfig.shortType = data.short_type.toUpperCase();
+            emaConfig.longType = data.long_type.toUpperCase();
+
+            // Format short EMA data for chart
+            if (data.short_ema && data.short_ema.length > 0) {
+                const shortEmaData = data.short_ema.filter(function (point) {
+                    return point.value > 0;
+                }).map(function (point) {
+                    return {
+                        time: point.time,
+                        value: point.value
+                    };
+                }).sort(function (a, b) {
+                    return a.time - b.time;
+                });
+
+                shortEmaSeries.setData(shortEmaData);
+
+                // Update series title with period
+                shortEmaSeries.applyOptions({
+                    title: emaConfig.shortType + ' ' + emaConfig.shortPeriod,
+                });
+            }
+
+            // Format long EMA data for chart
+            if (data.long_ema && data.long_ema.length > 0) {
+                const longEmaData = data.long_ema.filter(function (point) {
+                    return point.value > 0;
+                }).map(function (point) {
+                    return {
+                        time: point.time,
+                        value: point.value
+                    };
+                }).sort(function (a, b) {
+                    return a.time - b.time;
+                });
+
+                longEmaSeries.setData(longEmaData);
+
+                // Update series title with period
+                longEmaSeries.applyOptions({
+                    title: emaConfig.longType + ' ' + emaConfig.longPeriod,
+                });
+            }
+
+            console.log("📊 EMA Lines updated - Short:", data.short_ema?.length || 0, "points, Long:", data.long_ema?.length || 0, "points");
+        }
+
+        function handleAnalysisData(data) {
+            console.log("📈 Analysis Data:", data);
+
+            // Update slope direction with color
+            const slopeEl = document.getElementById('ema-short-slope');
+            slopeEl.innerText = data.ema_short_slope_direction;
+            slopeEl.style.color = data.ema_short_slope_direction === 'Up' ? '#00ff00' :
+                data.ema_short_slope_direction === 'Down' ? '#ff4444' : '#888';
+
+            // Update short EMA value
+            document.getElementById('ema-short-value').innerText = data.ema_short_value.toFixed(4);
+
+            // Update turn type with color
+            const turnEl = document.getElementById('ema-turn-type');
+            turnEl.innerText = data.is_ema_short_turn_type;
+            turnEl.style.color = data.is_ema_short_turn_type === 'TurnUp' ? '#00ff00' :
+                data.is_ema_short_turn_type === 'TurnDown' ? '#ff4444' : '#888';
+
+            // Update EMA diff with color
+            const diffEl = document.getElementById('ema-diff');
+            diffEl.innerText = data.ema_diff.toFixed(4);
+            diffEl.style.color = data.ema_diff > 0 ? '#00ff00' : data.ema_diff < 0 ? '#ff4444' : '#888';
+
+            // Update action signal with color
+            const actionEl = document.getElementById('action-signal');
+            actionEl.innerText = data.action;
+            actionEl.style.color = data.action === 'Call' ? '#2ecc71' :
+                data.action === 'Put' ? '#e74c3c' : '#f1c40f';
+        }
+
+        function handleTradeOpened(data) {
+            console.log("📝 Trade Opened:", data);
+            addPendingTrade(data.contract_id, data.asset, data.trade_type, data.stake, data.time);
+        }
+
+        function handleTradeResult(data) {
+            console.log("💰 Trade Result:", data);
+
+            document.getElementById('balance').innerText = data.balance.toFixed(2);
+
+            if (data.status === "win") {
+                winCount++;
+                winStreak++;
+                lossStreak = 0;
+                document.getElementById('win-status').innerText = "WIN ✓";
+                document.getElementById('win-status').className = "stat-box-value green";
+            } else {
+                lossCount++;
+                lossStreak++;
+                winStreak = 0;
+                document.getElementById('win-status').innerText = "LOSS ✗";
+                document.getElementById('win-status').className = "stat-box-value red";
+            }
+
+            document.getElementById('win-streak').innerText = winStreak;
+            document.getElementById('loss-streak').innerText = lossStreak;
+
+            if (data.contract_id) {
+                updateTradeInHistory(data.contract_id, data.status, data.profit, data.balance);
+                // Remove from active trades
+                activeTrades.delete(data.contract_id);
+                updateActiveTradesTable();
+            }
+        }
+
+        function handleTradeUpdate(data) {
+            console.log("📊 Trade Update:", data);
+
+            // Update or add to active trades
+            let currentTrade = activeTrades.get(data.contract_id) || {};
+
+            // Calculate Min/Max Profit
+            let minProfit = currentTrade.min_profit !== undefined ? Math.min(currentTrade.min_profit, data.profit) : data.profit;
+            let maxProfit = currentTrade.max_profit !== undefined ? Math.max(currentTrade.max_profit, data.profit) : data.profit;
+
+            activeTrades.set(data.contract_id, {
+                contract_id: data.contract_id,
+                entry_spot: data.entry_spot,
+                current_spot: data.current_spot,
+                buy_price: data.buy_price,
+                payout: data.payout,
+                profit: data.profit,
+                profit_percentage: data.profit_percentage,
+                date_expiry: data.date_expiry,
+                date_start: data.date_start,
+                is_sold: data.is_sold,
+                is_expired: data.is_expired,
+                asset: data.asset || currentTrade.asset || '-',
+                trade_type: data.trade_type || currentTrade.trade_type || '-',
+                min_profit: minProfit,
+                max_profit: maxProfit
+            });
+
+            updateActiveTradesTable();
+        }
+
+        function updateActiveTradesTable() {
+            const tbody = document.getElementById('active-trades-body');
+
+            if (activeTrades.size === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-trades">No active trades. Trades will appear here when opened.</td></tr>';
+                return;
+            }
+
+            const now = Math.floor(Date.now() / 1000);
+
+            const rows = Array.from(activeTrades.values()).map(function (trade, index) {
+                const now = Math.floor(Date.now() / 1000);
+                const timeLeft = trade.date_expiry - now;
+                const timeLeftStr = formatDuration(timeLeft);
+                const timeClass = timeLeft <= 10 ? 'time-warning' : '';
+
+                const profitClass = trade.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                const profitSign = trade.profit >= 0 ? '+' : '';
+
+                // Format types
+                const typeBadge = trade.trade_type === 'CALL'
+                    ? '<span style="background: rgba(0,255,0,0.2); color: #00ff00; padding: 2px 5px; border-radius: 4px;">CALL</span>'
+                    : '<span style="background: rgba(255,68,68,0.2); color: #ff4444; padding: 2px 5px; border-radius: 4px;">PUT</span>';
+
+                // Profit details: Current (+%)
+                const profitDisplay = `<span class="${profitClass}">${profitSign}${trade.profit.toFixed(2)}</span> <span style="font-size: 11px; color: #aaa;">[${trade.profit_percentage.toFixed(2)}%]</span>`;
+
+                return '<tr>' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td class="trade-id">' + trade.contract_id + '</td>' +
+                    '<td><strong>' + trade.asset + '</strong></td>' +
+                    '<td>' + typeBadge + '</td>' +
+                    '<td>$' + (trade.buy_price ? trade.buy_price.toFixed(2) : '0.00') + '</td>' +
+                    '<td>$' + (trade.payout ? trade.payout.toFixed(2) : '0.00') + '</td>' +
+                    '<td>' + profitDisplay + '</td>' +
+                    '<td>' + formatTime(trade.date_start) + '</td>' +
+                    '<td>' + formatTime(trade.date_expiry) + '</td>' +
+                    '<td class="' + timeClass + '" style="font-family: monospace;">' + timeLeftStr + '</td>' +
+                    '<td style="color: #ff4444;">' + (trade.min_profit !== undefined ? trade.min_profit.toFixed(2) : '-') + '</td>' +
+                    '<td style="color: #00ff00;">' + (trade.max_profit !== undefined ? trade.max_profit.toFixed(2) : '-') + '</td>' +
+                    '<td><button onclick="sellContract(\'' + trade.contract_id + '\')" class="sell-btn">ขาย</button></td>' +
+                    '</tr>';
+            });
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        function formatTime(unixTime) {
+            if (!unixTime) return '-';
+            const date = new Date(unixTime * 1000);
+            return date.toTimeString().split(' ')[0]; // HH:MM:SS
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 0) return '00:00:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return [h, m, s].map(v => v < 10 ? "0" + v : v).join(":");
+        }
+
+        function sellContract(contractId) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert("WebSocket not connected");
+                return;
+            }
+            if (confirm("Are you sure you want to SELL this contract?")) {
+                console.log("🔻 Selling contract:", contractId);
+                ws.send(JSON.stringify({
+                    command: "SELL",
+                    contract_id: contractId
+                }));
+            }
+        }
+
+        function addPendingTrade(contractId, asset, type, stake, time) {
+            const trade = {
+                id: contractId,
+                time: time,
+                asset: asset,
+                type: type,
+                stake: stake,
+                status: 'PENDING',
+                profit: '-',
+                balance: '-'
+            };
+
+            tradeHistory.unshift(trade);
+            pendingTrades.set(contractId, trade);
+            updateTradeHistoryTable();
+        }
+
+        function updateTradeInHistory(contractId, status, profit, balance) {
+            const trade = tradeHistory.find(function (t) {
+                return t.id === contractId;
+            });
+
+            if (trade) {
+                trade.status = status.toUpperCase();
+                trade.profit = profit.toFixed(2);
+                trade.balance = balance.toFixed(2);
+                pendingTrades.delete(contractId);
+                updateTradeHistoryTable();
+            }
+        }
+
+        function updateTradeHistoryTable() {
+            const tbody = document.getElementById('trade-history-body');
+
+            if (tradeHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-trades">No trades yet. Start trading to see history.</td></tr>';
+                return;
+            }
+
+            const rows = tradeHistory.map(function (trade) {
+                let statusClass = 'status-pending';
+                let profitColor = '';
+
+                if (trade.status === 'WIN') {
+                    statusClass = 'status-win';
+                    profitColor = 'green';
+                } else if (trade.status === 'LOSS') {
+                    statusClass = 'status-loss';
+                    profitColor = 'red';
+                }
+
+                const typeColor = trade.type === 'CALL' ? '#00ff00' : '#ff4444';
+                const profitText = trade.profit !== '-' ? '$' + trade.profit : '-';
+                const balanceText = trade.balance !== '-' ? '$' + trade.balance : '-';
+                const contractId = trade.id ? trade.id.substring(0, 12) + '...' : '-';
+
+                return '<tr>' +
+                    '<td>' + trade.time + '</td>' +
+                    '<td><strong>' + trade.asset + '</strong></td>' +
+                    '<td><span style="color: ' + typeColor + '">' + trade.type + '</span></td>' +
+                    '<td>$' + trade.stake.toFixed(2) + '</td>' +
+                    '<td class="' + statusClass + '">' + trade.status + '</td>' +
+                    '<td class="' + profitColor + '">' + profitText + '</td>' +
+                    '<td>' + balanceText + '</td>' +
+                    '<td class="trade-id">' + contractId + '</td>' +
+                    '</tr>';
+            });
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        function requestData() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert("WebSocket is not connected!");
+                return;
+            }
+
+            console.log("🗑️ Clearing old data...");
+            candleData = [];
+            candleSeries.setData([]);
+            shortEmaSeries.setData([]);
+            longEmaSeries.setData([]);
+            currentMinute = null;
+            document.getElementById('candle-count').innerText = '0';
+            document.getElementById('stat-open').innerText = '-';
+            document.getElementById('stat-high').innerText = '-';
+            document.getElementById('stat-low').innerText = '-';
+            document.getElementById('stat-close').innerText = '-';
+
+            const asset = document.getElementById('assetSelect').value;
+            const tradeMode = document.querySelector('input[name="switch-state"]:checked').value;
+            const moneyMode = document.querySelector('input[name="money-mode"]:checked').value;
+            const initialStake = parseFloat(document.getElementById('initial-stake').value) || 1.0;
+            const apiToken = document.getElementById('api-token').value.trim();
+            const appId = document.getElementById('app-id').value.trim();
+            const durationRaw = document.getElementById('durationSelect').value;
+            const [duration, durationUnit] = durationRaw.split(':');
+
+            const targetProfit = parseFloat(document.getElementById('target-grand-profit').value);
+            const targetWin = parseInt(document.getElementById('target-win-count').value);
+
+            const msg = JSON.stringify({
+                command: "START_DERIV",
+                asset: asset,
+                trade_mode: tradeMode,
+                money_mode: moneyMode,
+                initial_stake: initialStake,
+                api_token: apiToken,
+                app_id: appId,
+                duration: parseInt(duration),
+                duration_unit: durationUnit,
+                target_profit: targetProfit,
+                target_win: targetWin
+            });
+
+            console.log("📤 Sending command:", msg);
+            ws.send(msg);
+        }
+
+        function updateParams() {
+            // Update UI Visibility
+            const moneyMode = document.querySelector('input[name="money-mode"]:checked').value;
+            const groupProfit = document.getElementById('group-grand-profit');
+            const groupWin = document.getElementById('group-win-count');
+
+            if (moneyMode === 'fix') {
+                groupProfit.style.display = 'block';
+                groupWin.style.display = 'none';
+            } else {
+                groupProfit.style.display = 'none';
+                groupWin.style.display = 'block';
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            const durationRaw = document.getElementById('durationSelect').value;
+            const [duration, durationUnit] = durationRaw.split(':');
+            const targetProfit = parseFloat(document.getElementById('target-grand-profit').value);
+            const targetWin = parseInt(document.getElementById('target-win-count').value);
+
+            console.log("🔄 Updating Params:", moneyMode, duration, durationUnit, targetProfit, targetWin);
+            const msg = JSON.stringify({
+                command: "UPDATE_PARAMS",
+                money_mode: moneyMode,
+                duration: parseInt(duration),
+                duration_unit: durationUnit,
+                target_profit: targetProfit,
+                target_win: targetWin
+            });
+            ws.send(msg);
+        }
+
+        function updateTradeMode(mode) {
+            // If calling manually (not from click), update the radio button visual
+            if (document.querySelector('input[name="switch-state"]:checked').value !== mode) {
+                const radio = document.querySelector(`input[name="switch-state"][value="${mode}"]`);
+                if (radio) radio.checked = true;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            console.log("🔄 Updating trade mode to:", mode);
+            const msg = JSON.stringify({
+                command: "UPDATE_MODE",
+                trade_mode: mode
+            });
+            ws.send(msg);
+        }
+
+        function clearChart() {
+            candleData = [];
+            candleSeries.setData([]);
+            document.getElementById('candle-count').innerText = '0';
+            console.log("🗑️ Chart cleared");
+        }
+
+        function updateClock() {
+            const now = new Date(Date.now() + timeOffset);
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            // Calculate rotation angles
+            const hourAngle = (hours % 12) * 30 + minutes * 0.5; // 360/12 = 30 degrees per hour
+            const minuteAngle = minutes * 6 + seconds * 0.1; // 360/60 = 6 degrees per minute
+            const secondAngle = seconds * 6; // 360/60 = 6 degrees per second
+
+            // Apply rotations to hands
+            const hourHand = document.getElementById('hourHand');
+            const minuteHand = document.getElementById('minuteHand');
+            const secondHand = document.getElementById('secondHand');
+
+            if (hourHand) hourHand.style.transform = 'rotate(' + hourAngle + 'deg)';
+            if (minuteHand) minuteHand.style.transform = 'rotate(' + minuteAngle + 'deg)';
+            if (secondHand) secondHand.style.transform = 'rotate(' + secondAngle + 'deg)';
+
+            // Update digital time
+            const digitalTime = document.getElementById('digitalTime');
+            if (digitalTime) {
+                const timeStr = String(hours).padStart(2, '0') + ':' +
+                    String(minutes).padStart(2, '0') + ':' +
+                    String(seconds).padStart(2, '0');
+                digitalTime.innerText = timeStr;
+            }
+        }
+
+        window.onload = function () {
+            initChart();
+            document.getElementById('status').innerText = "WebSocket: NOT CONNECTED";
+            document.getElementById('status').style.color = "#888";
+
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Init UI params
+            updateParams();
+        };
+    </script>
+
+</body>
+
+</html>

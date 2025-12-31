@@ -1,0 +1,24 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300">
+  <rect x="20" y="120" width="200" height="60" fill="#E3F2FD" stroke="#1565C0"/>
+  <text x="120" y="155" text-anchor="middle" font-size="14">Browser / Frontend</text>
+
+  <rect x="260" y="120" width="220" height="60" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="370" y="155" text-anchor="middle" font-size="14">Axum WebSocket Server</text>
+
+  <rect x="520" y="120" width="220" height="60" fill="#FFFDE7" stroke="#F9A825"/>
+  <text x="630" y="155" text-anchor="middle" font-size="14">Deriv Connector Task</text>
+
+  <rect x="780" y="120" width="200" height="60" fill="#FCE4EC" stroke="#C2185B"/>
+  <text x="880" y="155" text-anchor="middle" font-size="14">Deriv API</text>
+
+  <line x1="220" y1="150" x2="260" y2="150" stroke="black" marker-end="url(#a)"/>
+  <line x1="480" y1="150" x2="520" y2="150" stroke="black" marker-end="url(#a)"/>
+  <line x1="740" y1="150" x2="780" y2="150" stroke="black" marker-end="url(#a)"/>
+
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#000"/>
+    </marker>
+  </defs>
+</svg>

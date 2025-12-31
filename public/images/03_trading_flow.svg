@@ -1,0 +1,22 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="380">
+  <rect x="300" y="30" width="200" height="60" fill="#E3F2FD" stroke="#1565C0"/>
+  <text x="400" y="65" text-anchor="middle">New Minute (0-2s)</text>
+
+  <rect x="300" y="120" width="200" height="60" fill="#FFFDE7" stroke="#F9A825"/>
+  <text x="400" y="155" text-anchor="middle">Trade Mode?</text>
+
+  <rect x="80" y="220" width="160" height="60" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="160" y="255" text-anchor="middle">CALL</text>
+
+  <rect x="320" y="220" width="160" height="60" fill="#FCE4EC" stroke="#C2185B"/>
+  <text x="400" y="255" text-anchor="middle">PUT</text>
+
+  <rect x="560" y="220" width="160" height="60" fill="#EEEEEE" stroke="#424242"/>
+  <text x="640" y="255" text-anchor="middle">HOLD</text>
+
+  <line x1="400" y1="90" x2="400" y2="120" stroke="black"/>
+  <line x1="400" y1="180" x2="160" y2="220" stroke="black"/>
+  <line x1="400" y1="180" x2="400" y2="220" stroke="black"/>
+  <line x1="400" y1="180" x2="640" y2="220" stroke="black"/>
+</svg>

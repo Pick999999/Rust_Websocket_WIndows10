@@ -1,0 +1,18 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="300">
+  <rect x="250" y="30" width="200" height="60" fill="#E3F2FD" stroke="#1565C0"/>
+  <text x="350" y="65" text-anchor="middle">Trade Result</text>
+
+  <rect x="100" y="140" width="200" height="60" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="200" y="175" text-anchor="middle">WIN → Reset</text>
+
+  <rect x="400" y="140" width="200" height="60" fill="#FCE4EC" stroke="#C2185B"/>
+  <text x="500" y="175" text-anchor="middle">LOSS</text>
+
+  <rect x="400" y="230" width="200" height="60" fill="#FFFDE7" stroke="#F9A825"/>
+  <text x="500" y="265" text-anchor="middle">Martingale +1</text>
+
+  <line x1="350" y1="90" x2="200" y2="140" stroke="black"/>
+  <line x1="350" y1="90" x2="500" y2="140" stroke="black"/>
+  <line x1="500" y1="200" x2="500" y2="230" stroke="black"/>
+</svg>

@@ -1,0 +1,65 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="600">
+  <style>
+    text { font-family: Arial, sans-serif; font-size: 14px; }
+    .actor { fill: #E3F2FD; stroke: #1565C0; }
+    .line { stroke: #333; stroke-dasharray: 4 4; }
+    .msg { stroke: #000; marker-end: url(#arrow); }
+  </style>
+
+  <!-- Actors -->
+  <rect x="80" y="20" width="180" height="40" class="actor"/>
+  <text x="170" y="45" text-anchor="middle">Browser</text>
+
+  <rect x="360" y="20" width="220" height="40" class="actor"/>
+  <text x="470" y="45" text-anchor="middle">Axum Relay Server</text>
+
+  <rect x="700" y="20" width="260" height="40" class="actor"/>
+  <text x="830" y="45" text-anchor="middle">Deriv WebSocket API</text>
+
+  <!-- Lifelines -->
+  <line x1="170" y1="60" x2="170" y2="560" class="line"/>
+  <line x1="470" y1="60" x2="470" y2="560" class="line"/>
+  <line x1="830" y1="60" x2="830" y2="560" class="line"/>
+
+  <!-- Messages -->
+  <line x1="170" y1="100" x2="470" y2="100" class="msg"/>
+  <text x="320" y="90" text-anchor="middle">WebSocket Connect (/ws)</text>
+
+  <line x1="170" y1="140" x2="470" y2="140" class="msg"/>
+  <text x="320" y="130" text-anchor="middle">START_DERIV</text>
+
+  <line x1="470" y1="180" x2="830" y2="180" class="msg"/>
+  <text x="650" y="170" text-anchor="middle">connect_async()</text>
+
+  <line x1="470" y1="220" x2="830" y2="220" class="msg"/>
+  <text x="650" y="210" text-anchor="middle">authorize (token)</text>
+
+  <line x1="470" y1="260" x2="830" y2="260" class="msg"/>
+  <text x="650" y="250" text-anchor="middle">subscribe ticks</text>
+
+  <line x1="470" y1="300" x2="830" y2="300" class="msg"/>
+  <text x="650" y="290" text-anchor="middle">subscribe candles (1m)</text>
+
+  <line x1="830" y1="340" x2="470" y2="340" class="msg"/>
+  <text x="650" y="330" text-anchor="middle">tick / candle data</text>
+
+  <line x1="470" y1="380" x2="170" y2="380" class="msg"/>
+  <text x="320" y="370" text-anchor="middle">Candle / EMA / Analysis</text>
+
+  <line x1="470" y1="420" x2="830" y2="420" class="msg"/>
+  <text x="650" y="410" text-anchor="middle">buy (CALL / PUT)</text>
+
+  <line x1="830" y1="460" x2="470" y2="460" class="msg"/>
+  <text x="650" y="450" text-anchor="middle">proposal_open_contract</text>
+
+  <line x1="470" y1="500" x2="170" y2="500" class="msg"/>
+  <text x="320" y="490" text-anchor="middle">TradeUpdate / TradeResult</text>
+
+  <!-- Arrow definition -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#000"/>
+    </marker>
+  </defs>
+</svg>
